@@ -99,7 +99,7 @@ def normalize(x):
     : return: Numpy array of normalize data
     """
     # TODO: Implement Function
-    return x/255
+    return (x-np.min(x))/(np.max(x)-np.min(x))
 
 
 """
@@ -117,6 +117,8 @@ tests.test_normalize(normalize)
 
 
 import pandas
+encoder = LabelBinarizer()
+encoder.fit(range(10))
 def one_hot_encode(x):
     """
     One hot encode a list of sample labels. Return a one-hot encoded vector for each label.
@@ -124,8 +126,7 @@ def one_hot_encode(x):
     : return: Numpy array of one-hot encoded labels
     """
     # Create the encoder 创建编码器
-    encoder = LabelBinarizer()
-    encoder.fit([0,1,2,3,4,5,6,7,8,9])
+    
     #print("x",x)
     
     output = encoder.transform(x)
@@ -264,7 +265,7 @@ import problem_unittests as tests
 # In[9]:
 
 
-def conv2d_maxpool(x_tensor, conv_num_outputs, conv_ksize, conv_strides, pool_ksize, pool_strides):
+def conv2d_maxpool(x_tensor, conv_num_outputs, conv_ksize, conv_strides, pool_ksize, pool_strides, max_pool_padding = "SAME"):
     """
     Apply convolution then max pooling to x_tensor
     :param x_tensor: TensorFlow Tensor
@@ -278,12 +279,12 @@ def conv2d_maxpool(x_tensor, conv_num_outputs, conv_ksize, conv_strides, pool_ks
     # TODO: Implement Function
 
     #W = tf.get_variable("W", [a, b, z, conv_num_outputs], initializer = tf.contrib.layers.xavier_initializer(seed = 0))
-    W = tf.Variable(tf.truncated_normal([int(conv_ksize[0]), int(conv_ksize[1]), int(x_tensor.shape[3]), int(conv_num_outputs)]))
+    W = tf.Variable(tf.truncated_normal([int(conv_ksize[0]), int(conv_ksize[1]), int(x_tensor.shape[3]), int(conv_num_outputs)], stddev = 0.05))
     #b = tf.get_variable("b", [4, 4, 3, 8], initializer = tf.contrib.layers.xavier_initializer(seed = 0))
     b = tf.Variable(tf.zeros(conv_num_outputs))
-    Z = tf.nn.conv2d(x_tensor, W, strides = [1, conv_strides[0], conv_strides[1], 1], padding = 'SAME')
+    Z = tf.nn.conv2d(x_tensor, W, strides = [1, conv_strides[0], conv_strides[1], 1], padding = "SAME")
     A = tf.nn.relu(tf.nn.bias_add(Z, b))
-    P1 = tf.nn.max_pool(A, ksize = [1, pool_ksize[0], pool_ksize[1], 1], strides = [1, pool_strides[0], pool_strides[1], 1], padding = 'SAME')
+    P1 = tf.nn.max_pool(A, ksize = [1, pool_ksize[0], pool_ksize[1], 1], strides = [1, pool_strides[0], pool_strides[1], 1], padding = max_pool_padding)
     return P1
 
 """
@@ -328,7 +329,7 @@ def fully_conn(x_tensor, num_outputs):
     : return: A 2-D tensor where the second dimension is num_outputs.
     """
     # TODO: Implement Function
-    return tf.contrib.layers.fully_connected(x_tensor, num_outputs, activation_fn = None)
+    return tf.contrib.layers.fully_connected(x_tensor, num_outputs, activation_fn = tf.nn.relu)
 
 
 """
@@ -386,28 +387,35 @@ def conv_net(x, keep_prob):
     #    Play around with different number of outputs, kernel size and stride
     # Function Definition from Above:
     #    conv2d_maxpool(x_tensor, conv_num_outputs, conv_ksize, conv_strides, pool_ksize, pool_strides)
-    Z = conv2d_maxpool(x, 96, (3,3), (1,1), (3,3), (1,1))
-    
-
+    Z1 = conv2d_maxpool(x, 48, (5,5), (1,1), (3,3), (3,3), max_pool_padding = "SAME")
+    Z2 = conv2d_maxpool(Z1, 128, (3,3), (1,1), (2,2), (2,2), max_pool_padding = "SAME")
+    Z2 = tf.nn.dropout(Z2, keep_prob)
+    Z3 = conv2d_maxpool(Z2, 192, (3,3), (1,1), (2,2), (2,2), max_pool_padding = "VALID")
+    Z4 = conv2d_maxpool(Z3, 192, (3,3), (1,1), (2,2), (2,2), max_pool_padding = "SAME")
+    Z4 = tf.nn.dropout(Z4, keep_prob)
+    Z5 = conv2d_maxpool(Z4, 128, (3,3), (1,1), (2,2), (2,2), max_pool_padding = "VALID")
+    A5 = tf.nn.dropout(Z5, keep_prob)
     # TODO: Apply a Flatten Layer
     # Function Definition from Above:
     #   flatten(x_tensor)
-    Z = flatten(Z)
+    A5 = flatten(A5)
 
     # TODO: Apply 1, 2, or 3 Fully Connected Layers
     #    Play around with different number of outputs
     # Function Definition from Above:
     #   fully_conn(x_tensor, num_outputs)
-    A = fully_conn(Z, 48)
-    
+    Z6 = fully_conn(A5, 256)
+    A6 = tf.nn.dropout(Z6, keep_prob)
+    Z7 = fully_conn(A6, 128)
+    A7 = tf.nn.dropout(Z7, keep_prob)
     # TODO: Apply an Output Layer
     #    Set this to the number of classes
     # Function Definition from Above:
     #   output(x_tensor, num_outputs)
-    Y = output(A, 10)
+    A8 = output(A7, 10)
     
     # TODO: return output
-    return Y
+    return A8
 
 
 """
@@ -470,31 +478,31 @@ def train_neural_network(session, optimizer, keep_probability, feature_batch, la
     #label_batch.dtype = "int"
     #print(label_batch[0:2])
     # TODO: Implement Function
-    X_train = normalize(feature_batch)
+    #X_train = normalize(feature_batch)
     #print("X_train.shape = "+str(X_train.shape))
     #label = label_batch*10
     #label_batch = label_batch.astype(int)
     #print ("label_batch="+str(label_batch.shape))
     #y_train = one_hot_encode(label_batch)
-    y_train = label_batch
+    #y_train = label_batch
     
     
-    x_tensor = neural_net_image_input((X_train.shape[1], X_train.shape[2], X_train.shape[3]))
+    #x_tensor = neural_net_image_input((X_train.shape[1], X_train.shape[2], X_train.shape[3]))
     
     #print ("y_train.shape="+str(y_train.shape))
     
-    y_tensor = neural_net_label_input(y_train.shape[1])
-    print("x_tensor.shape = "+str(x_tensor.shape))
-    print("y_tensor.shape = "+str(y_tensor.shape))
-    print("label_batch.shape = "+str(label_batch.shape))
-    print("feature_batch.shape = "+str(feature_batch.shape))
-    keep_prob = neural_net_keep_prob_input()
+    #y_tensor = neural_net_label_input(y_train.shape[1])
+    #print("x_tensor.shape = "+str(x_tensor.shape))
+    #print("y_tensor.shape = "+str(y_tensor.shape))
+    #print("label_batch.shape = "+str(label_batch.shape))
+    #print("feature_batch.shape = "+str(feature_batch.shape))
+    #keep_prob = neural_net_keep_prob_input()
     
-    logits = conv_net(x_tensor, keep_prob)
+    #logits = conv_net(x_tensor, keep_prob)
     
-    logits = tf.identity(logits, name='logits')
+    #logits = tf.identity(logits, name='logits')
     
-    cost = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(logits=logits, labels=y_train))
+    #cost = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(logits=logits, labels=y_train))
     
     #correct_pred = tf.equal(tf.argmax(logits, 1), tf.argmax(y, 1))
     
@@ -506,7 +514,7 @@ def train_neural_network(session, optimizer, keep_probability, feature_batch, la
         # Run the initialization
         #sess.run(init)
     
-    temp_cost = session.run([optimizer, cost], feed_dict = {x_tensor: X_train, y_tensor: y_train})
+    temp_cost = session.run([optimizer, cost], feed_dict = {x: feature_batch, y: label_batch, keep_prob: keep_probability})
 """
 DON'T MODIFY ANYTHING IN THIS CELL THAT IS BELOW THIS LINE
 """
@@ -539,14 +547,17 @@ def print_stats(session, feature_batch, label_batch, cost, accuracy):
     
     #accuracy = accuracy.eval({X: X_test, Y: Y_test})
     
-    loss = session.run(cost, feed_dict={x_tensor:feature_batch, y_tensor:label_batch, keep_prob:1})
+    loss = session.run(cost, feed_dict={x: feature_batch, y: label_batch, keep_prob: 1.})
+    train_acc = sess.run(accuracy, feed_dict={
+                x: feature_batch,
+                y: label_batch,
+                keep_prob: 1.})
     valid_acc = sess.run(accuracy, feed_dict={
                 x: valid_features,
                 y: valid_labels,
                 keep_prob: 1.})
-    print('Loss: {:>10.4f} Validation Accuracy: {:.6f}'.format(
-                loss,
-                valid_acc))
+    print('Loss: {:>10.4f} train Accuracy: {:.6f} Validation Accuracy: {:.6f} '.format(
+                loss, train_acc, valid_acc))
 
 
 # ### Hyperparameters
@@ -563,8 +574,8 @@ def print_stats(session, feature_batch, label_batch, cost, accuracy):
 
 
 # TODO: Tune Parameters
-epochs = 10
-batch_size = 1024
+epochs = 128
+batch_size = 256
 keep_probability = 0.5
 
 
@@ -577,12 +588,10 @@ keep_probability = 0.5
 """
 DON'T MODIFY ANYTHING IN THIS CELL
 """
-learning_rate = 0.009
 print('Checking the Training on a Single Batch...')
 with tf.Session() as sess:
     # Initializing the variables
     sess.run(tf.global_variables_initializer())
-    optimizer = tf.train.AdamOptimizer(learning_rate).minimize(cost)
     # Training cycle
     for epoch in range(epochs):
         batch_i = 1
@@ -591,7 +600,7 @@ with tf.Session() as sess:
             #print("batch_labels:"+str(batch_labels))
             train_neural_network(sess, optimizer, keep_probability, batch_features/1.0, batch_labels/1.0)
         print('Epoch {:>2}, CIFAR-10 Batch {}:  '.format(epoch + 1, batch_i), end='')
-        #print_stats(sess, batch_features, batch_labels, cost, accuracy)
+        print_stats(sess, batch_features, batch_labels, cost, accuracy)
 
 
 # ### Fully Train the Model

@@ -3,7 +3,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from sklearn.preprocessing import LabelBinarizer
 
-#name
+
 def _load_label_names():
     """
     Load the label names from file
