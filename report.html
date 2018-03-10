@@ -11901,7 +11901,7 @@ div#notebook {
 <ul>
 <li>没有移动</li>
 <li>根据智能出租车的状况,获得正数或者负数的奖励</li>
-<li>当智能出租车没有移动:前方的交通灯为红色时,奖励为正;当交通灯为绿色时,奖励为负;</li>
+<li>当智能出租车没有移动:前方的交通灯为红色时,奖励为正;当交通灯为绿色时,且此时依据周围状况出租车应该进行移动时,奖励为负;</li>
 </ul>
 
 </div>
@@ -11943,7 +11943,7 @@ div#notebook {
 </ul>
 </li>
 <li>environment.py<ul>
-<li>step()function</li>
+<li>act()function</li>
 </ul>
 </li>
 <li>simulator.py<ul>
@@ -12110,7 +12110,7 @@ div#notebook {
 </ul>
 </li>
 <li>deadline:<ul>
-<li>相比以上的特征,剩余动作数目并不能对智能出租车进行有效建模,该特征不能对智能出租车的学习起到有效地促进作用.</li>
+<li>未增加deadline时,状态空间的总数为384,由于deadline可取值比较多,所以说该特征会大大增加状态空间的总数而使得学习效率变低;由于该智能出租车的起点与终点一直发生改变,所以当前的deadline并不能对以后起到良好的泛化作用.</li>
 </ul>
 </li>
 </ul>
@@ -12192,7 +12192,7 @@ div#notebook {
 
 </div>
 </div>
-</div>状态空间的大小为3*2*4*4*4 = 384,而agent的action有四个:None,left,right,forward;所以状态的总数为384*4 = 1536,Q-table不是很大,每个状态经过若干次学习后,应该会学得一个较好的策略.
+</div>waypoint之所以为3,因为返回NONE时出租车已经在目的地了;状态空间的大小为3*2*4*4*4 = 384,而agent的action有四个:None,left,right,forward;所以状态的总数为384*4 = 1536,Q-table不是很大,每个状态经过若干次学习后,至少1536全部学习过,应该就会学得一个较好的策略.
 <div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
 </div>
 <div class="inner_cell">
