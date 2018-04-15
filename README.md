@@ -8,7 +8,8 @@
 首先在该目录下使用linux16.04的terminal运行 *python preprocess.py* ,
 之后使用jupyternotebook打开resnet.ipynb,直接训练即可。
 ### 第二种训练方案：
-使用 jupyter notebook 打开combine.ipynb，直接训练即可，训练成功截图如下：
+使用 jupyter notebook 打开combine.ipynb，直接训练即可，最終的测试集loss为0.03722.
+训练成功截图如下：
 
 
 <img src="123.PNG" style="width:977px;height:911px;">
