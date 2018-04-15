@@ -1,6 +1,6 @@
 ## Dogs vs. Cats Project Preprocess
 本项目需要安装cuda9.0,与cudnn。在ubuntu 16.04系统下训练，
-将pip更新至10.0.0版本后，使用 *pip install requirements.txt* 进行安装。
+将pip更新至10.0.0版本后，使用 *pip install -r requirements.txt* 进行安装。
 从kaggle下载到训练集与测试集后，解压到该目录，目录名为 *train* *test*。
 ## Train
 #### 本项目有两种训练方案，第一种为：
